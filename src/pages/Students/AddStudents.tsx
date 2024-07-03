@@ -123,8 +123,8 @@ const AddStudents: React.FC = () => {
             fieldErrors.lastEducation = error.message;
           if (error.path.includes('schoolName'))
             fieldErrors.schoolName = error.message;
-          // if (error.path.includes('graduationYear'))
-          //   fieldErrors.graduationYear = error.message;
+          if (error.path.includes('graduationYear'))
+            fieldErrors.graduationYear = error.message;
           if (error.path.includes('certificate'))
             fieldErrors.certificate = error.message;
           if (error.path.includes('nik')) fieldErrors.nik = error.message;
@@ -379,7 +379,7 @@ const AddStudents: React.FC = () => {
                   <input
                     type="number"
                     placeholder="Tahun Lulus Siswa"
-                    value={graduationYear.toString()}
+                    value={graduationYear}
                     onChange={(e) =>
                       setGraduationYear(parseInt(e.target.value))
                     }

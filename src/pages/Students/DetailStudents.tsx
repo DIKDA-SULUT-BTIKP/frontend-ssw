@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
-import { z } from 'zod';
+import { useNavigate, useParams } from 'react-router-dom';
+import { set, z } from 'zod';
 
 import DefaultLayout from '../../layout/DefaultLayout';
 import Breadcrumb from '../../components/Breadcrumbs/Breadcrumb';
@@ -38,34 +38,40 @@ const DetailStudents: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const dispatch = useDispatch();
   const { student } = useSelector((state: any) => state.student);
+  const navigate = useNavigate();
+  const [name, setName] = useState('');
+  const [gender, setGender] = useState(genders[0]);
+  const [placeOfBirth, setPlaceOfBirth] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [address, setAddress] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [lastEducation, setLastEducation] = useState(lastEducations[0]);
+  const [schoolName, setSchoolName] = useState('');
+  const [graduationYear, setGraduationYear] = useState(0);
+  const [certificate, setCertificate] = useState('');
+  const [nik, setNik] = useState('');
+  const [religion, setReligion] = useState(religions[0]);
+  const [trainingLocation, setTrainingLocation] = useState(
+    trainingLocations[0],
+  );
 
-  const [formData, setFormData] = useState<Student>({
-    name: '',
-    gender: '',
-    placeOfBirth: '',
-    dateOfBirth: '',
-    address: '',
-    phoneNumber: '',
-    email: '',
-    lastEducation: '',
-    schoolName: '',
-    graduationYear: 0,
-    certificate: '',
-    nik: '',
-    religion: '',
-    trainingLocation: '',
-  });
-
-  const [errors, setErrors] = useState<Partial<Student>>({});
-
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const [errors, setErrors] = useState<{
+    name?: string;
+    placeOfBirth?: string;
+    gender?: string;
+    dateOfBirth?: string;
+    address?: string;
+    phoneNumber?: string;
+    email?: string;
+    lastEducation?: string;
+    schoolName?: string;
+    graduationYear?: number;
+    certificate?: string;
+    nik?: string;
+    religion?: string;
+    trainingLocation?: string;
+  }>({});
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -103,21 +109,96 @@ const DetailStudents: React.FC = () => {
         trainingLocation: z.string().min(1, { message: 'Wajib diisi' }),
       });
 
-      const result = schema.safeParse(formData);
+      const result = schema.safeParse({
+        name,
+        gender,
+        placeOfBirth,
+        dateOfBirth,
+        address,
+        phoneNumber,
+        email,
+        lastEducation,
+        schoolName,
+        graduationYear,
+        certificate,
+        nik,
+        religion,
+        trainingLocation,
+      });
 
       if (!result.success) {
-        const fieldErrors: Partial<Student> = {};
-        result.error.issues.forEach((issue) => {
-          fieldErrors[issue.path[0] as keyof Student] = issue.message;
+        const fieldErrors: {
+          name?: string;
+          gender?: string;
+          placeOfBirth?: string;
+          dateOfBirth?: string;
+          address?: string;
+          phoneNumber?: string;
+          email?: string;
+          lastEducation?: string;
+          schoolName?: string;
+          graduationYear?: number;
+          certificate?: string;
+          nik?: string;
+          religion?: string;
+          trainingLocation?: string;
+        } = {};
+        result.error.errors.forEach((error) => {
+          if (error.path.includes('name')) fieldErrors.name = error.message;
+          if (error.path.includes('gender')) fieldErrors.gender = error.message;
+          if (error.path.includes('placeOfBirth'))
+            fieldErrors.placeOfBirth = error.message;
+          if (error.path.includes('dateOfBirth'))
+            fieldErrors.dateOfBirth = error.message;
+          if (error.path.includes('address'))
+            fieldErrors.address = error.message;
+          if (error.path.includes('phoneNumber'))
+            fieldErrors.phoneNumber = error.message;
+          if (error.path.includes('email')) fieldErrors.email = error.message;
+          if (error.path.includes('lastEducation'))
+            fieldErrors.lastEducation = error.message;
+          if (error.path.includes('schoolName'))
+            fieldErrors.schoolName = error.message;
+          if (error.path.includes('graduationYear')) {
+            fieldErrors.graduationYear = error.message;
+          }
+          if (error.path.includes('certificate'))
+            fieldErrors.certificate = error.message;
+          if (error.path.includes('nik')) fieldErrors.nik = error.message;
+          if (error.path.includes('religion'))
+            fieldErrors.religion = error.message;
+          if (error.path.includes('trainingLocation'))
+            fieldErrors.trainingLocation = error.message;
         });
         setErrors(fieldErrors);
       } else {
+        dispatch(
+          updateStudent({
+            id,
+            student: {
+              name,
+              gender,
+              placeOfBirth,
+              dateOfBirth,
+              address,
+              phoneNumber,
+              email,
+              lastEducation,
+              schoolName,
+              graduationYear,
+              certificate,
+              nik,
+              religion,
+              trainingLocation,
+            },
+          }),
+        );
         setErrors({});
-        dispatch(updateStudent({ id, ...result.data }));
+        navigate('/students');
         ToastNotification.success('Data siswa berhasil diperbarui');
       }
     } catch (error) {
-      ToastNotification.error('Terjadi kesalahan');
+      ToastNotification.error('Data siswa gagal diperbarui');
     }
   };
 
@@ -129,23 +210,20 @@ const DetailStudents: React.FC = () => {
 
   useEffect(() => {
     if (student) {
-      console.log(student);
-      setFormData({
-        name: student.name,
-        gender: student.gender,
-        placeOfBirth: student.place_of_birth,
-        dateOfBirth: student.date_of_birth,
-        address: student.address,
-        phoneNumber: student.phone_number,
-        email: student.email,
-        lastEducation: student.last_education,
-        schoolName: student.school_name,
-        graduationYear: student.graduation_year,
-        certificate: student.certificate,
-        nik: student.nik,
-        religion: student.religion,
-        trainingLocation: student.training_location,
-      });
+      setName(student.name);
+      setPlaceOfBirth(student.place_of_birth);
+      setDateOfBirth(student.date_of_birth);
+      setAddress(student.address);
+      setPhoneNumber(student.phone_number);
+      setEmail(student.email);
+      setLastEducation(student.last_education);
+      setSchoolName(student.school_name);
+      setGraduationYear(student.graduation_year);
+      setCertificate(student.certificate);
+      setNik(student.nik);
+      setReligion(student.religion);
+      setTrainingLocation(student.training_location);
+      setGender(student.gender);
     }
   }, [student]);
 
@@ -163,155 +241,139 @@ const DetailStudents: React.FC = () => {
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="p-6.5">
-                  {[
-                    {
-                      label: 'Nama',
-                      name: 'name',
-                      type: 'text',
-                      placeholder: 'Nama Siswa',
-                    },
-                    {
-                      label: 'Tempat Lahir',
-                      name: 'placeOfBirth',
-                      type: 'text',
-                      placeholder: 'Tempat Lahir Siswa',
-                    },
-                    {
-                      label: 'Tanggal Lahir',
-                      name: 'dateOfBirth',
-                      type: 'date',
-                      placeholder: 'Tanggal Lahir Siswa',
-                    },
-                    {
-                      label: 'Alamat',
-                      name: 'address',
-                      type: 'textarea',
-                      placeholder: 'Alamat Siswa',
-                      rows: 4,
-                    },
-                    {
-                      label: 'Nomor Telepon',
-                      name: 'phoneNumber',
-                      type: 'text',
-                      placeholder: 'Nomor Telepon Siswa',
-                    },
-                    {
-                      label: 'Email',
-                      name: 'email',
-                      type: 'email',
-                      placeholder: 'Email Siswa',
-                    },
-                    {
-                      label: 'Nama Sekolah',
-                      name: 'schoolName',
-                      type: 'text',
-                      placeholder: 'Nama Sekolah Siswa',
-                    },
-                    {
-                      label: 'Tahun Lulus',
-                      name: 'graduationYear',
-                      type: 'number',
-                      placeholder: 'Tahun Lulus Siswa',
-                    },
-                    {
-                      label: 'Nomor Ijazah/Sertifikat',
-                      name: 'certificate',
-                      type: 'text',
-                      placeholder: 'Nomor Ijazah/Sertifikat Siswa',
-                    },
-                    {
-                      label: 'NIK',
-                      name: 'nik',
-                      type: 'text',
-                      placeholder: 'Nomor Induk Kependudukan Siswa',
-                    },
-                  ].map(({ label, name, type, placeholder, rows }, index) => (
-                    <div className="mb-4.5" key={index}>
-                      <label className="mb-2.5 block text-black dark:text-white">
-                        {label} <span className="text-meta-1">*</span>
-                      </label>
-                      {type === 'textarea' ? (
-                        <textarea
-                          name={name}
-                          placeholder={placeholder}
-                          value={formData[name as keyof Student] as string}
-                          onChange={handleChange}
-                          rows={rows}
-                          className={`w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
-                            errors[name as keyof Student]
-                              ? 'border-red-500'
-                              : ''
-                          }`}
-                        />
-                      ) : (
-                        <input
-                          type={type}
-                          name={name}
-                          placeholder={placeholder}
-                          value={
-                            formData[name as keyof Student] as string | number
-                          }
-                          onChange={handleChange}
-                          className={`w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
-                            errors[name as keyof Student]
-                              ? 'border-red-500'
-                              : ''
-                          }`}
-                        />
-                      )}
-                      {errors[name as keyof Student] && (
-                        <span className="text-red-500">
-                          {errors[name as keyof Student]}
-                        </span>
-                      )}
-                    </div>
-                  ))}
+                  <div className="mb-4.5">
+                    <label className="mb-2.5 block text-black dark:text-white">
+                      Nama <span className="text-meta-1">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Nama Siswa"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className={`w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
+                        errors.name ? 'border-red-500' : ''
+                      }`}
+                    />
+                    {errors.name && (
+                      <p className="text-red-500 mt-1 text-sm">{errors.name}</p>
+                    )}
+                  </div>
 
                   <div className="mb-4.5">
                     <label className="mb-2.5 block text-black dark:text-white">
                       Jenis Kelamin <span className="text-meta-1">*</span>
                     </label>
                     <select
-                      name="gender"
-                      value={formData.gender}
-                      onChange={handleChange}
-                      className={`w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
-                        errors.gender ? 'border-red-500' : ''
+                      value={gender}
+                      onChange={(e) => setGender(e.target.value)}
+                      className={`w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
+                        errors.placeOfBirth ? 'border-red-500' : ''
                       }`}
                     >
-                      <option value="">Pilih jenis kelamin</option>
                       {genders.map((gender) => (
                         <option key={gender} value={gender}>
                           {gender === 'Male' ? 'Laki-laki' : 'Perempuan'}
                         </option>
                       ))}
                     </select>
-                    {errors.gender && (
-                      <span className="text-red-500">{errors.gender}</span>
+                  </div>
+                  <div className="mb-4.5">
+                    <label className="mb-2.5 block text-black dark:text-white">
+                      Tempat Lahir <span className="text-meta-1">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Tempat Lahir Siswa"
+                      value={placeOfBirth}
+                      onChange={(e) => setPlaceOfBirth(e.target.value)}
+                      className={`w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
+                        errors.placeOfBirth ? 'border-red-500' : ''
+                      }`}
+                    />
+                    {errors.placeOfBirth && (
+                      <p className="text-red-500 mt-1 text-sm">
+                        {errors.placeOfBirth}
+                      </p>
                     )}
                   </div>
 
                   <div className="mb-4.5">
                     <label className="mb-2.5 block text-black dark:text-white">
-                      Agama <span className="text-meta-1">*</span>
+                      Tanggal Lahir <span className="text-meta-1">*</span>
                     </label>
-                    <select
-                      name="religion"
-                      value={formData.religion}
-                      onChange={handleChange}
-                      className={`w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
-                        errors.religion ? 'border-red-500' : ''
+                    <input
+                      type="date"
+                      placeholder="Tanggal Lahir Siswa"
+                      value={dateOfBirth}
+                      onChange={(e) => setDateOfBirth(e.target.value)}
+                      className={`w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
+                        errors.dateOfBirth ? 'border-red-500' : ''
                       }`}
-                    >
-                      <option value="">Pilih agama</option>
-                      {religions.map((religion) => (
-                        <option key={religion} value={religion}>
-                          {religion}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.religion && (
-                      <span className="text-red-500">{errors.religion}</span>
+                    />
+                    {errors.dateOfBirth && (
+                      <p className="text-red-500 mt-1 text-sm">
+                        {errors.dateOfBirth}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mb-4.5">
+                    <label className="mb-2.5 block text-black dark:text-white">
+                      Alamat <span className="text-meta-1">*</span>
+                    </label>
+                    <textarea
+                      placeholder="Alamat Siswa"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      rows={4}
+                      className={`w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
+                        errors.address ? 'border-red-500' : ''
+                      }`}
+                    />
+                    {errors.address && (
+                      <p className="text-red-500 mt-1 text-sm">
+                        {errors.address}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mb-4.5">
+                    <label className="mb-2.5 block text-black dark:text-white">
+                      Nomor Telepon <span className="text-meta-1">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Nomor Telepon Siswa"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className={`w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
+                        errors.phoneNumber ? 'border-red-500' : ''
+                      }`}
+                    />
+                    {errors.phoneNumber && (
+                      <p className="text-red-500 mt-1 text-sm">
+                        {errors.phoneNumber}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mb-4.5">
+                    <label className="mb-2.5 block text-black dark:text-white">
+                      Email <span className="text-meta-1">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="Email Siswa"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className={`w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
+                        errors.email ? 'border-red-500' : ''
+                      }`}
+                    />
+                    {errors.email && (
+                      <p className="text-red-500 mt-1 text-sm">
+                        {errors.email}
+                      </p>
                     )}
                   </div>
 
@@ -321,23 +383,131 @@ const DetailStudents: React.FC = () => {
                     </label>
                     <select
                       name="lastEducation"
-                      value={formData.lastEducation}
-                      onChange={handleChange}
-                      className={`w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
+                      id="lastEducation"
+                      value={lastEducation}
+                      onChange={(e) => setLastEducation(e.target.value)}
+                      className={`w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
                         errors.lastEducation ? 'border-red-500' : ''
                       }`}
                     >
-                      <option value="">Pilih pendidikan terakhir</option>
-                      {lastEducations.map((education) => (
-                        <option key={education} value={education}>
-                          {education}
+                      {lastEducations.map((item: any, key: any) => (
+                        <option key={key} value={item}>
+                          {item}
                         </option>
                       ))}
                     </select>
+
                     {errors.lastEducation && (
-                      <span className="text-red-500">
+                      <p className="text-red-500 mt-1 text-sm">
                         {errors.lastEducation}
-                      </span>
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mb-4.5">
+                    <label className="mb-2.5 block text-black dark:text-white">
+                      Nama Sekolah <span className="text-meta-1">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Nama Sekolah Siswa"
+                      value={schoolName}
+                      onChange={(e) => setSchoolName(e.target.value)}
+                      className={`w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
+                        errors.schoolName ? 'border-red-500' : ''
+                      }`}
+                    />
+                    {errors.schoolName && (
+                      <p className="text-red-500 mt-1 text-sm">
+                        {errors.schoolName}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mb-4.5">
+                    <label className="mb-2.5 block text-black dark:text-white">
+                      Tahun Lulus <span className="text-meta-1">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Tahun Lulus Siswa"
+                      value={graduationYear}
+                      onChange={(e) =>
+                        setGraduationYear(parseInt(e.target.value))
+                      }
+                      className={`w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
+                        errors.graduationYear ? 'border-red-500' : ''
+                      }`}
+                    />
+                    {errors.graduationYear && (
+                      <p className="text-red-500 mt-1 text-sm">
+                        {errors.graduationYear}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mb-4.5">
+                    <label className="mb-2.5 block text-black dark:text-white">
+                      Nomor Ijazah/Sertifikat{' '}
+                      <span className="text-meta-1">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Nomor Ijazah/Sertifikat Siswa"
+                      value={certificate}
+                      onChange={(e) => setCertificate(e.target.value)}
+                      className={`w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
+                        errors.certificate ? 'border-red-500' : ''
+                      }`}
+                    />
+                    {errors.certificate && (
+                      <p className="text-red-500 mt-1 text-sm">
+                        {errors.certificate}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mb-4.5">
+                    <label className="mb-2.5 block text-black dark:text-white">
+                      NIK <span className="text-meta-1">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Nomor Induk Kependudukan Siswa"
+                      value={nik}
+                      onChange={(e) => setNik(e.target.value)}
+                      className={`w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
+                        errors.nik ? 'border-red-500' : ''
+                      }`}
+                    />
+                    {errors.nik && (
+                      <p className="text-red-500 mt-1 text-sm">{errors.nik}</p>
+                    )}
+                  </div>
+
+                  <div className="mb-4.5">
+                    <label className="mb-2.5 block text-black dark:text-white">
+                      Agama <span className="text-meta-1">*</span>
+                    </label>
+                    <select
+                      value={religion}
+                      onChange={(e) => setReligion(e.target.value)}
+                      className={`w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
+                        errors.religion ? 'border-red-500' : ''
+                      }`}
+                    >
+                      <option value="">Pilih Agama</option>
+                      {religions.map((religion) => (
+                        <option key={religion} value={religion}>
+                          {religion}
+                        </option>
+                      ))}
+                    </select>
+
+                    {errors.religion && (
+                      <p className="text-red-500 mt-1 text-sm">
+                        {errors.religion}
+                      </p>
                     )}
                   </div>
 
@@ -347,29 +517,30 @@ const DetailStudents: React.FC = () => {
                     </label>
                     <select
                       name="trainingLocation"
-                      value={formData.trainingLocation}
-                      onChange={handleChange}
-                      className={`w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
+                      id="trainingLocation"
+                      value={trainingLocation}
+                      onChange={(e) => setTrainingLocation(e.target.value)}
+                      className={`w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary ${
                         errors.trainingLocation ? 'border-red-500' : ''
                       }`}
                     >
-                      <option value="">Pilih lokasi pelatihan</option>
-                      {trainingLocations.map((location) => (
-                        <option key={location} value={location}>
-                          {location}
+                      {trainingLocations.map((trainingLocation) => (
+                        <option key={trainingLocation} value={trainingLocation}>
+                          {trainingLocation}
                         </option>
                       ))}
                     </select>
+
                     {errors.trainingLocation && (
-                      <span className="text-red-500">
+                      <p className="text-red-500 mt-1 text-sm">
                         {errors.trainingLocation}
-                      </span>
+                      </p>
                     )}
                   </div>
 
                   <button
                     type="submit"
-                    className="flex w-full justify-center rounded bg-primary p-3 font-medium text-gray"
+                    className="flex w-full justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90"
                   >
                     Simpan
                   </button>

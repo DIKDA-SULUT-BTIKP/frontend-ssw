@@ -118,11 +118,11 @@ export const getStudentById = createAsyncThunk<
 
 export const updateStudent = createAsyncThunk<
   Student,
-  Student,
+  { id: string; student: Student },
   { rejectValue: string }
->('student/updateStudent', async (student, thunkAPI) => {
+>('student/updateStudent', async ({ id, student }, thunkAPI) => {
   try {
-    const response = await axios.patch(`${API_URL}/${student.id}`, student);
+    const response = await axios.patch(`${API_URL}/${id}`, student);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {

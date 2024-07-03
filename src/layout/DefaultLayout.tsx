@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getMe } from '../features/thunks/authThunks';
 import { useNavigate } from 'react-router-dom';
 import ToastNotification from '../common/Toast';
+import Loader from '../common/Loader';
 
 const DefaultLayout: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -14,7 +15,9 @@ const DefaultLayout: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { isError, user } = useSelector((state: any) => state.auth);
 
   useEffect(() => {
-    dispatch(getMe());
+    if (user) {
+      dispatch(getMe());
+    }
   }, [dispatch]);
 
   useEffect(() => {

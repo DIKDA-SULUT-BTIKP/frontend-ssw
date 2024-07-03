@@ -42,10 +42,6 @@ const SignIn: React.FC = () => {
     password: z
       .string()
       .min(6, { message: 'Kata sandi harus setidaknya 6 karakter' }),
-    // .regex(/[a-z]/, { message: 'Kata sandi harus memiliki setidaknya satu huruf kecil' })
-    // .regex(/[A-Z]/, { message: 'Kata sandi harus memiliki setidaknya satu huruf besar' })
-    // .regex(/[0-9]/, { message: 'Kata sandi harus memiliki setidaknya satu angka' })
-    // .regex(/[^a-zA-Z0-9]/, { message: 'Kata sandi harus memiliki setidaknya satu karakter khusus' }),
   });
 
   useEffect(() => {
@@ -131,7 +127,7 @@ const SignIn: React.FC = () => {
                     />
                     {errors.email && (
                       <p className="text-red-500 text-sm mt-1">
-                        {errors.password}
+                        {errors.email}
                       </p>
                     )}
                     <span className="absolute right-4 top-4">
