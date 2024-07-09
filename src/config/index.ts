@@ -1,3 +1,3 @@
 export const config = {
-  API_URL: 'http://10.10.11.233:5000',
+  API_URL: 'http://103.46.198.125:5000',
 };

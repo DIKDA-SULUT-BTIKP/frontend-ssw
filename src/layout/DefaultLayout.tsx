@@ -15,9 +15,7 @@ const DefaultLayout: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { isError, user } = useSelector((state: any) => state.auth);
 
   useEffect(() => {
-    if (user) {
-      dispatch(getMe());
-    }
+    dispatch(getMe());
   }, [dispatch]);
 
   useEffect(() => {
